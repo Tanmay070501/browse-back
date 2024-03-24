@@ -1,0 +1,19 @@
+{
+  "name": "@tannu-dev/browse-back",
+  "version": "1.0.0",
+  "description": "session replay tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tanmay070501/browse-back.git"
+  },
+  "author": "Tanmay Maheshwari",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Tanmay070501/browse-back/issues"
+  },
+  "homepage": "https://github.com/Tanmay070501/browse-back#readme"
+}
