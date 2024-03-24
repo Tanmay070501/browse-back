@@ -2,9 +2,12 @@
   "name": "@tannu-dev/browse-back",
   "version": "1.0.0",
   "description": "session replay tool",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsup"
   },
   "repository": {
     "type": "git",
@@ -15,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/Tanmay070501/browse-back/issues"
   },
-  "homepage": "https://github.com/Tanmay070501/browse-back#readme"
+  "homepage": "https://github.com/Tanmay070501/browse-back#readme",
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.3"
+  }
 }
