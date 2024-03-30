@@ -20,7 +20,12 @@
   },
   "homepage": "https://github.com/Tanmay070501/browse-back#readme",
   "devDependencies": {
+    "@rrweb/types": "^2.0.0-alpha.11",
     "tsup": "^8.0.2",
     "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "rrweb": "^2.0.0-alpha.4"
   }
 }
