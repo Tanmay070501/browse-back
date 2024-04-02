@@ -5,6 +5,8 @@ export interface BrowseBackOptions {
     recordErrorOnly: boolean;
     lastNMinutes: number;
     socketUrl: string;
+    username?: string;
+    user_identifier?: string;
 }
 
 export type EventWithTime  = eventWithTime & {
