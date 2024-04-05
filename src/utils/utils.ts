@@ -1,5 +1,5 @@
 import { EventWithTime } from "../@types/options";
-import { NETWORK_PLUGIN_NAME, NetworkRequest } from "../plugin/console/record";
+import { NETWORK_PLUGIN_NAME, NetworkRequest } from "../plugin/network/record";
 import _ from "lodash"
 
 const partitionArray = <T extends Object>(

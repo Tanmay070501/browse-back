@@ -1,11 +1,9 @@
-import {record} from  "rrweb"
-import {  IncrementalSource, MouseInteractions, ReplayerEvents, eventWithTime, listenerHandler } from '@rrweb/types';
-import { BrowseBackOptions, EventWithTime } from "../@types/options";
-import { getRecordNetworkPlugin } from "../plugin/console/record";
+import { record , getRecordConsolePlugin } from  "rrweb"
+import {  IncrementalSource } from '@rrweb/types';
+import { BrowseBackOptions, EventWithTime, recordConfig, validConfigOptions } from "../@types/options";
+import { getRecordNetworkPlugin } from "../plugin/network/record";
 import io, { Socket } from 'socket.io-client';
 import { RecordEvents, SocketEventType } from "../constants/constant";
-import { v4 as uuidv4 } from 'uuid';
-import { alignDomAndNetworkEvents } from "../utils/utils";
 
 
 type CustomEventType = EventWithTime[][]
@@ -44,9 +42,17 @@ export class BrowseBack {
             this.username = username
         }
     }
-    
-    static init ( options: BrowseBackOptions): void {
+
+    static init ( options: BrowseBackOptions, config?: recordConfig): void {
         try{
+            if(config){
+                for (let key in config) {
+                    if (!(key in validConfigOptions)) {
+                        console.error(`Invalid option: ${key}`);
+                        return;
+                    }
+                }
+            }
             let isCheckout = false;
             let started = false;
             const {lastNMinutes = 4, apiKey, socketUrl, user_identifier, username} = options ?? {}
@@ -85,10 +91,11 @@ export class BrowseBack {
                     getRecordNetworkPlugin({
                         recordHeaders: true,
                         recordBody: true,
-                        recordInitialRequests: true
+                        recordInitialRequests: true,
                     }),
+                    getRecordConsolePlugin()
                 ],
-                maskAllInputs: true
+                ...config,
             })
 
             // initiate connection to backend
