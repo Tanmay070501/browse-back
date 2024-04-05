@@ -1,5 +1,5 @@
 import { EventWithTime } from "../@types/options";
-import { NETWORK_PLUGIN_NAME, NetworkData, NetworkRequest } from "../plugin/console/record";
+import { NETWORK_PLUGIN_NAME, NetworkRequest } from "../plugin/console/record";
 import _ from "lodash"
 
 const partitionArray = <T extends Object>(
@@ -39,7 +39,6 @@ export const alignDomAndNetworkEvents = (elements: EventWithTime[]): EventWithTi
         return e.type === 6 && e.data.plugin === NETWORK_PLUGIN_NAME
     })
 
-    console.log(domEv, networkEv)
     let transformedData = transformData(
         networkEv,
         domEv[0].timestamp,

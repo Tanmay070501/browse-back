@@ -1,5 +1,4 @@
 import { eventWithTime } from "@rrweb/types";
-import { NetworkData, NetworkRequest } from "../plugin/console/record";
 
 export interface BrowseBackOptions {
     apiKey: string;

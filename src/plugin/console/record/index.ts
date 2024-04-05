@@ -190,7 +190,6 @@ function initPerformanceObserver(
       })),
       isInitial: true,
     });
-    // console.log(Date.now(), "initial")
   }
   const observer = new win.PerformanceObserver((entries) => {
     const performanceEntries = entries
@@ -205,7 +204,6 @@ function initPerformanceObserver(
             entry.initiatorType !== 'xmlhttprequest' &&
             entry.initiatorType !== 'fetch'),
       );
-      // console.log(performanceEntries)
     cb({
       requests: performanceEntries.map((entry) => ({
         url: entry.name,
@@ -215,7 +213,6 @@ function initPerformanceObserver(
         endTime: Math.round(entry.responseEnd),
       })),
     });
-    // console.log("pf", Date.now())
   });
   observer.observe({ entryTypes: ['navigation', 'resource'] });
   return () => {
