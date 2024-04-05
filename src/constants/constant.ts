@@ -2,7 +2,7 @@ export enum SocketEventType {
     invalid = "invalid",
     snapshot = "snapshot",
     error_snapshot = "error_snapshot",
-    session_id = "session_id"
+    session = "session"
 }
 
 export enum RecordEvents {
