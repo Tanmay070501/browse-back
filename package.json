@@ -1,6 +1,6 @@
 {
   "name": "@tannu-dev/browse-back",
-  "version": "1.0.1-beta.1",
+  "version": "1.0.1-beta.2",
   "description": "session replay tool",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -14,7 +14,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean"
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
