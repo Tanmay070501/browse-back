@@ -60,8 +60,7 @@ export class BrowseBack {
             if("recordErrorOnly" in browseBackOptions){
                 this.recordErrorOnly = browseBackOptions.recordErrorOnly
             }
-            const options: BrowseBackOptions = {
-                // @ts-ignore
+            const options = {
                 lastNMinutes: 8,
                 recordConsole: true,
                 recordNetwork: true,

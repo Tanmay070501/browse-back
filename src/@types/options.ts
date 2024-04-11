@@ -4,7 +4,7 @@ import { recordOptions } from "rrweb/typings/types";
 export interface BrowseBackOptions {
     apiKey: string;
     recordErrorOnly: boolean;
-    lastNMinutes: number;
+    lastNMinutes?: number;
     socketUrl: string;
     username?: string;
     user_identifier?: string;
