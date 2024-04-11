@@ -1,9 +1,9 @@
 import { record , getRecordConsolePlugin } from  "rrweb"
-import {  IncrementalSource } from '@rrweb/types';
+import {  IncrementalSource, RecordPlugin } from '@rrweb/types';
 import { BrowseBackOptions, EventWithTime, recordConfig, validConfigOptions } from "../@types/options";
-import { getRecordNetworkPlugin } from "../plugin/network/record";
 import io, { Socket } from 'socket.io-client';
 import { RecordEvents, SocketEventType } from "../constants/constant";
+import { getRecordNetworkPlugin } from "../plugin/netwok/record";
 
 
 type CustomEventType = EventWithTime[][]
@@ -43,7 +43,7 @@ export class BrowseBack {
         }
     }
 
-    static init ( options: BrowseBackOptions, config?: recordConfig): void {
+    static init ( browseBackOptions: BrowseBackOptions, config?: recordConfig): void {
         try{
             if(config){
                 for (let key in config) {
@@ -55,21 +55,40 @@ export class BrowseBack {
             }
             let isCheckout = false;
             let started = false;
-            const {lastNMinutes = 4, apiKey, socketUrl, user_identifier, username} = options ?? {}
+            const plugins: RecordPlugin[] = []
 
-            if("recordErrorOnly" in options){
-                this.recordErrorOnly = options.recordErrorOnly
+            if("recordErrorOnly" in browseBackOptions){
+                this.recordErrorOnly = browseBackOptions.recordErrorOnly
+            }
+            const options: BrowseBackOptions = {
+                // @ts-ignore
+                lastNMinutes: 8,
+                recordConsole: true,
+                recordNetwork: true,
+                ...browseBackOptions,
             }
 
-            if(!apiKey) throw new Error("BrowseBack: API Key Missing")
-            if(!socketUrl) throw new Error("Socket url missing")
+            if(!options.apiKey) throw new Error("BrowseBack: API Key Missing")
+            if(!options.socketUrl) throw new Error("Socket url missing")
 
-            if(username){
-                this.username = username
+            if(options.username){
+                this.username = options.username
             }
 
-            if(user_identifier){
-                this.user_identifier = user_identifier
+            if(options.user_identifier){
+                this.user_identifier = options.user_identifier
+            }
+            
+            if(options.recordConsole){
+                plugins.push(getRecordConsolePlugin())
+            }
+
+            if(options.recordNetwork){
+                plugins.push(getRecordNetworkPlugin({
+                    recordHeaders: true,
+                    recordBody: true,
+                    recordInitialRequests: true
+                }))
             }
             
             record({
@@ -87,39 +106,38 @@ export class BrowseBack {
                     const lastEvents = BrowseBack.events[BrowseBack.events.length - 1];
                     lastEvents.push(event);
                 },
-                plugins: [
-                    getRecordNetworkPlugin({
-                        recordHeaders: true,
-                        recordBody: true,
-                        recordInitialRequests: true,
-                    }),
-                    getRecordConsolePlugin()
-                ],
+                plugins: plugins,
                 ...config,
             })
 
             // initiate connection to backend
             const headers = {
-                "browse-back-key": apiKey,
+                "browse-back-key": options.apiKey,
             }
 
-            this.socket = io(socketUrl, {
-            transportOptions: {
-                polling: {
-                extraHeaders: headers,
+            this.socket = io(options.socketUrl, {
+                transportOptions: {
+                    polling: {
+                    extraHeaders: headers,
+                    },
                 },
-            },
+                
             });
+
+            this.socket.on('disconnect', (e, d) => {
+                console.log("disconnect ", e, d)
+                this.sessionId = null;
+            })
 
             // Record Error only
 
             if(window && this.recordErrorOnly){
-
+                // fake event for inactivity
                 setInterval(() => {
                     if(!started) return;
                     isCheckout = true
                     record.addCustomEvent(RecordEvents.ignore, {})
-                }, (lastNMinutes / 2) * 60 * 1000)
+                }, (options.lastNMinutes / 2) * 60 * 1000)
 
                 window.addEventListener('error', debounce((err) => {
                     if(!started) return;
@@ -147,17 +165,17 @@ export class BrowseBack {
                 return;
             }
 
-            if(!this.recordErrorOnly){
-                this.socket.emit("create_session")
-                this.socket.once('set_session_id', (data) => {
-                    this.sessionId = data
-                    try{
-                        localStorage.setItem("browse_back", this.sessionId as string)
-                    }catch(err){
-                        // ignore
-                    }
-                })
-            }
+            
+            this.socket.emit("create_session")
+
+            this.socket.once('set_session_id', (data) => {
+                this.sessionId = data
+                try{
+                    localStorage.setItem("browse_back", this.sessionId as string)
+                }catch(err){
+                    // ignore
+                }
+            })
 
             window.addEventListener("error", (err) => {
                 if(err?.message){
@@ -166,12 +184,13 @@ export class BrowseBack {
             })
 
             setInterval(() => {
-                if(!BrowseBack.sessionId) return;
+                if(!this.sessionId) return;
                 this.sendSnapshotToBackend({events: BrowseBack.events[0]}, SocketEventType.session)
                 BrowseBack.events[0] = []
             }, 5000)
         }catch(_err){
             // ignore
+            console.error(_err)
         }
     }
 
@@ -192,7 +211,7 @@ export class BrowseBack {
     private static getMetadata = () => {
         return {
             username: this.username,
-            user_identifier:this.user_identifier,
+            user_identifier: this.user_identifier,
             error: this.recentErr
         }
     }

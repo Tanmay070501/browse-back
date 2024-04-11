@@ -1,4 +1,6 @@
 import type { IWindow, listenerHandler, RecordPlugin } from '@rrweb/types';
+
+// basic re-defining func
 export function patch(
     source: { [key: string]: any },
     name: string,
@@ -34,7 +36,7 @@ export function patch(
       };
     } catch {
       return () => {
-        //
+        // nothing to return, returning empty Fn
       };
     }
   }
@@ -73,8 +75,7 @@ export type InitiatorType =
   | 'script'
   | 'track'
   | 'video'
-  | 'xmlhttprequest'
-  | 'other';
+  | 'xmlhttprequest';
 
 type NetworkRecordOptions = {
   initiatorTypes?: InitiatorType[];
@@ -110,7 +111,6 @@ const defaultNetworkOptions: NetworkRecordOptions = {
     'track',
     'video',
     'xmlhttprequest',
-    "other"
   ],
   ignoreRequestFn: () => false,
   recordHeaders: false,
@@ -511,6 +511,12 @@ function initNetworkObserver(
       //
     };
   }
+
+  win.performance.setResourceTimingBufferSize(300)
+
+  win.performance.addEventListener("resourcetimingbufferfull", () => {
+    win.performance.clearResourceTimings()
+  })
   const networkOptions = (options
     ? Object.assign({}, defaultNetworkOptions, options)
     : defaultNetworkOptions) as Required<NetworkRecordOptions>;

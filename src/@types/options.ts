@@ -8,6 +8,8 @@ export interface BrowseBackOptions {
     socketUrl: string;
     username?: string;
     user_identifier?: string;
+    recordNetwork?: boolean;
+    recordConsole?: boolean;
 }
 
 export type EventWithTime  = eventWithTime & {
