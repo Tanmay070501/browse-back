@@ -10,6 +10,8 @@ export interface BrowseBackOptions {
     user_identifier?: string;
     recordNetwork?: boolean;
     recordConsole?: boolean;
+    record?: boolean;
+    sendMail?: boolean;
 }
 
 export type EventWithTime  = eventWithTime & {
@@ -29,8 +31,8 @@ export const validConfigOptions =  [
     "maskAllInputs",
 ]
 export interface recordConfig {
-    recordCanvas: RRWebRecordOpts["recordCanvas"],
-    recordCrossOriginIframes: RRWebRecordOpts["recordCrossOriginIframes"]
-    maskInputOptions: RRWebRecordOpts["maskInputOptions"],
-    maskAllInputs:RRWebRecordOpts["maskAllInputs"]
+    recordCanvas?: RRWebRecordOpts["recordCanvas"],
+    recordCrossOriginIframes?: RRWebRecordOpts["recordCrossOriginIframes"]
+    maskInputOptions?: RRWebRecordOpts["maskInputOptions"],
+    maskAllInputs?:RRWebRecordOpts["maskAllInputs"]
 }

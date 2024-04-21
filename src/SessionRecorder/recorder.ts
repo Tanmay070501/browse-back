@@ -22,6 +22,7 @@ function debounce<T extends (...args: any[]) => void>(func: T, delay: number): (
     };
 }
 
+
   
 IncrementalSource
 
@@ -29,25 +30,29 @@ export class BrowseBack {
     private static events: CustomEventType = [[]]
     private static socket: Socket;
     private static sessionId: string | null = null;
-    static username: string = 'Unknown';
-    static user_identifier: string = 'N/A';
-    private static recordErrorOnly: Boolean = true;
-    private static recentErr: string = "N/A"
+    private static username: string = 'Unknown';
+    private static user_identifier: string = 'N/A';
+    private static recordErrorOnly: Boolean = false;
+    private static recentErr: string = ""
+    static stop: () => void;
+    private static recordStopFn?:  () => void;
+    private static record?: boolean = true;
+    private static clearIntervalList: number[] = [];
 
     static updateUser(username?: string, user_identifier?: string) {
         if(user_identifier){
-            this.user_identifier = user_identifier
+            BrowseBack.user_identifier = user_identifier
         }
         if(username){
-            this.username = username
+            BrowseBack.username = username
         }
     }
 
-    static init ( browseBackOptions: BrowseBackOptions, config?: recordConfig): void {
+    static init ( browseBackOptions: BrowseBackOptions, config: recordConfig = {}): void {
         try{
             if(config){
                 for (let key in config) {
-                    if (!(key in validConfigOptions)) {
+                    if (!(validConfigOptions.includes(key))) {
                         console.error(`Invalid option: ${key}`);
                         return;
                     }
@@ -58,24 +63,35 @@ export class BrowseBack {
             const plugins: RecordPlugin[] = []
 
             if("recordErrorOnly" in browseBackOptions){
-                this.recordErrorOnly = browseBackOptions.recordErrorOnly
+                BrowseBack.recordErrorOnly = browseBackOptions.recordErrorOnly
             }
+
+            if("record" in browseBackOptions){
+                BrowseBack.record = browseBackOptions.record;
+            }
+
             const options = {
-                lastNMinutes: 8,
-                recordConsole: true,
-                recordNetwork: true,
+                lastNMinutes: 6,
+                recordConsole: false,
+                recordNetwork: false,
+                sendMail: false,
                 ...browseBackOptions,
+            }
+
+            if(!BrowseBack.record){
+                console.log("Not recording");
+                return;
             }
 
             if(!options.apiKey) throw new Error("BrowseBack: API Key Missing")
             if(!options.socketUrl) throw new Error("Socket url missing")
 
             if(options.username){
-                this.username = options.username
+                BrowseBack.username = options.username
             }
 
             if(options.user_identifier){
-                this.user_identifier = options.user_identifier
+                BrowseBack.user_identifier = options.user_identifier
             }
             
             if(options.recordConsole){
@@ -90,13 +106,14 @@ export class BrowseBack {
                 }))
             }
             
-            record({
+            
+            BrowseBack.recordStopFn = record({
                 emit: (event: EventWithTime, _isCheckout) => {
                     started = true
-                    if(BrowseBack.events.length >= 4 && this.recordErrorOnly){
+                    if(BrowseBack.events.length >= 4 && BrowseBack.recordErrorOnly){
                         BrowseBack.events.splice(0, 1)
                     }
-                    if (isCheckout && this.recordErrorOnly) {
+                    if (isCheckout && BrowseBack.recordErrorOnly) {
                         BrowseBack.events.push([]);
                         isCheckout = false
                         record.takeFullSnapshot()
@@ -109,34 +126,50 @@ export class BrowseBack {
                 ...config,
             })
 
+            BrowseBack.stop = () => {
+                BrowseBack.socket.disconnect()
+                BrowseBack.sessionId = null;
+                BrowseBack.events = [[]]
+                BrowseBack.clearIntervalList.forEach(item => {
+                    clearInterval(item);
+                })
+                BrowseBack.clearIntervalList = []
+                if(BrowseBack.recordStopFn){
+                    BrowseBack.recordStopFn();
+                }
+            }
+
             // initiate connection to backend
             const headers = {
                 "browse-back-key": options.apiKey,
+                "browse-back-record-error": BrowseBack.recordErrorOnly,
+                "browse-back-send-mail": options.sendMail
             }
 
-            this.socket = io(options.socketUrl, {
+            BrowseBack.socket = io(options.socketUrl, {
                 transportOptions: {
                     polling: {
                     extraHeaders: headers,
                     },
                 },
-                
             });
 
-            this.socket.on('disconnect', (e, d) => {
-                console.log("disconnect ", e, d)
-                this.sessionId = null;
+            BrowseBack.socket.on('disconnect', (reason, desc) => {
+                console.log("disconnect ", reason, desc)
+                BrowseBack.sessionId = null;
             })
 
             // Record Error only
 
-            if(window && this.recordErrorOnly){
+            if(window && BrowseBack.recordErrorOnly){
                 // fake event for inactivity
-                setInterval(() => {
+                const interval1 = setInterval(() => {
                     if(!started) return;
                     isCheckout = true
                     record.addCustomEvent(RecordEvents.ignore, {})
                 }, (options.lastNMinutes / 2) * 60 * 1000)
+
+                BrowseBack.clearIntervalList.push(interval1)
 
                 window.addEventListener('error', debounce((err) => {
                     if(!started) return;
@@ -158,35 +191,42 @@ export class BrowseBack {
                     }
                     // atleast two event is required to send it to backend
                     if(events.length < 2) return;
-                    this.sendSnapshotToBackend({events: events, error: err?.message ?? 'Unknown error'},SocketEventType.error_snapshot)
+                    if(!BrowseBack.sessionId) return;
+                    BrowseBack.sendSnapshotToBackend({events: events, error: err?.message ?? 'Unknown error'},SocketEventType.error_snapshot)
                 }, 500))
 
                 return;
             }
 
-            
-            this.socket.emit("create_session")
+            BrowseBack.socket.on('start', () => {
 
-            this.socket.once('set_session_id', (data) => {
-                this.sessionId = data
-                try{
-                    localStorage.setItem("browse_back", this.sessionId as string)
-                }catch(err){
-                    // ignore
-                }
+                BrowseBack.socket.emit("create_session")
+
+                BrowseBack.socket.once('set_session_id', (data) => {
+                    BrowseBack.sessionId = data
+
+                    try{
+                        localStorage.setItem("browse_back", BrowseBack.sessionId as string)
+                    }catch(err){
+                        // ignore
+                    }
+                })
+
+                window.addEventListener("error", (err) => {
+                    if(err?.message){
+                        BrowseBack.recentErr = err.message
+                    }
+                })
+
+                const interval2 = setInterval(() => {
+
+                    if(!BrowseBack.sessionId) return;
+
+                    BrowseBack.sendSnapshotToBackend({events: BrowseBack.events[0]}, SocketEventType.session)
+                    BrowseBack.events[0] = []
+                }, 5000)
+                BrowseBack.clearIntervalList.push(interval2);
             })
-
-            window.addEventListener("error", (err) => {
-                if(err?.message){
-                    this.recentErr = err.message
-                }
-            })
-
-            setInterval(() => {
-                if(!this.sessionId) return;
-                this.sendSnapshotToBackend({events: BrowseBack.events[0]}, SocketEventType.session)
-                BrowseBack.events[0] = []
-            }, 5000)
         }catch(_err){
             // ignore
             console.error(_err)
@@ -195,23 +235,23 @@ export class BrowseBack {
 
 
     private static sendSnapshotToBackend (data: {events: EventWithTime[], error?: string }, topic: SocketEventType) {
-        if(!this.socket) return;
-        let metadata = this.getMetadata()
+        if(!BrowseBack.socket) return;
+        let metadata = BrowseBack.getMetadata()
         if(!metadata?.error){
             metadata.error = data?.error as string 
         }
-        this.socket.emit(topic, JSON.stringify({
+        BrowseBack.socket.emit(topic, JSON.stringify({
             events: data.events,
             metadata: metadata,
-            sessionId: this.sessionId
+            sessionId: BrowseBack.sessionId
         }))
     }
 
     private static getMetadata = () => {
         return {
-            username: this.username,
-            user_identifier: this.user_identifier,
-            error: this.recentErr
+            username: BrowseBack.username,
+            user_identifier: BrowseBack.user_identifier,
+            error: BrowseBack.recentErr
         }
     }
 

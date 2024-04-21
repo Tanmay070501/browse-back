@@ -1,6 +1,6 @@
 {
   "name": "@tannu-dev/browse-back",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "session replay tool",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

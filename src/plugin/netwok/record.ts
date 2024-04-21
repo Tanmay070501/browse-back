@@ -517,6 +517,7 @@ function initNetworkObserver(
   win.performance.addEventListener("resourcetimingbufferfull", () => {
     win.performance.clearResourceTimings()
   })
+
   const networkOptions = (options
     ? Object.assign({}, defaultNetworkOptions, options)
     : defaultNetworkOptions) as Required<NetworkRecordOptions>;
