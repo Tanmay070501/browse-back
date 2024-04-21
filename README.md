@@ -1,7 +1,6 @@
 
-<div style="text-align:center; background-color:white;">
-  <img src="./logo.svg" alt="BrowseBack Icon" width="100">
-</div>
+
+<img style="display:block;margin:auto;background:white;" src="./logo.svg" alt="BrowseBack Icon" width="600">
 
 # BrowseBack
 
