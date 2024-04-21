@@ -11,7 +11,7 @@ BrowseBack is a JavaScript library for recording and analyzing user interactions
 - Record user interactions
 - Capture errors and exceptions
 - Customizable recording options
-- Either Record errors or whore session based on your usecase
+- Either Record errors or whole session based on your usecase
 
 ## Installation
 
