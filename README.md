@@ -1,3 +1,5 @@
+![BrowseBack Icon](logo.svg)
+
 # BrowseBack
 
 BrowseBack is a JavaScript library for recording and analyzing user interactions on web applications. It captures user events and errors, allowing you to analyze user behavior and diagnose issues.
